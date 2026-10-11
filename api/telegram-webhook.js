@@ -39,7 +39,6 @@ function tgApi(method, data) {
 }
 
 module.exports = async function handler(req, res) {
-  // Always return 200 immediately to eliminate Telegram loading spinner
   if (req.method !== 'POST') {
     return res.status(200).send('Telegram Webhook Active');
   }
@@ -75,7 +74,6 @@ module.exports = async function handler(req, res) {
         const days = parseInt(parts[0].replace('approve_', ''), 10) || 30;
         const deviceId = parts[1];
 
-        // Instant response to stop button spinner immediately
         const answerPromise = tgApi('answerCallbackQuery', {
           callback_query_id: cq.id,
           text: `✅ Approved for ${days} days!`
@@ -136,7 +134,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // 2. Handle Text Commands (/start, /keys, /stats)
+    // 2. Handle Text Commands (/start, /keys, /stats, /blockall, /unblockall)
     if (body.message) {
       const msg = body.message;
       const chatId = msg.chat?.id;
@@ -145,16 +143,30 @@ module.exports = async function handler(req, res) {
       if (text === '/start') {
         await tgApi('sendMessage', {
           chat_id: chatId,
-          text: `🔥 *JJK License Manager Bot Active!*\n\nCommands:\n• /stats - Active licenses count\n• /keys - List all active keys\n• /newkey - Forge a 30-day license key\n\nNaye license requests yahan automatically approval buttons ke sath aayenge.`,
+          text: `🔥 *JJK License Manager Bot Active!*\n\nCommands:\n• /blockall - 🚨 Sare devices aur keys turant block karein\n• /unblockall - ✅ Sare devices unblock karein\n• /stats - Active licenses count\n• /newkey - Forge a 30-day license key`,
+          parse_mode: 'Markdown'
+        });
+      } else if (text === '/blockall') {
+        await db.setGlobalBlock(true);
+        await tgApi('sendMessage', {
+          chat_id: chatId,
+          text: `🚨 *ALL KEYS & DEVICES ARE NOW BLOCKED!*\n\nSabhi devices par app ka access band ho chuka hai (Status: REJECTED).`,
+          parse_mode: 'Markdown'
+        });
+      } else if (text === '/unblockall') {
+        await db.setGlobalBlock(false);
+        await tgApi('sendMessage', {
+          chat_id: chatId,
+          text: `✅ *GLOBAL BLOCK REMOVED!*\n\nDevices ab wapas access kar sakte hain.`,
           parse_mode: 'Markdown'
         });
       } else if (text === '/stats') {
+        const isBlocked = await db.isGlobalBlocked();
         const all = await db.getAllLicenses();
         const active = all.filter(l => !l.isBlocked && l.expiresAt > Date.now());
-        const blocked = all.filter(l => l.isBlocked);
         await tgApi('sendMessage', {
           chat_id: chatId,
-          text: `📊 *System Stats:*\n\n• Total Keys: *${all.length}*\n• Active Licenses: *${active.length}*\n• Blocked: *${blocked.length}*`,
+          text: `📊 *System Stats:*\n\n• Global Block: *${isBlocked ? '🚨 ACTIVE (BLOCKED)' : '🟢 OFF (NORMAL)'}*\n• Total Keys: *${all.length}*\n• Active Licenses: *${active.length}*`,
           parse_mode: 'Markdown'
         });
       } else if (text === '/newkey') {

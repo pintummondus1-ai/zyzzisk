@@ -12,6 +12,12 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // 1. Check Global Block Emergency Switch
+    const globalBlocked = await db.isGlobalBlocked();
+    if (globalBlocked) {
+      return res.status(200).json({ status: 'rejected' });
+    }
+
     const license = await db.findByDevice(deviceId);
     if (!license) {
       return res.status(200).json({ status: 'none' });
@@ -25,7 +31,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ status: 'expired' });
     }
 
-    // Return both licenseKey and license for 100% compatibility
     return res.status(200).json({
       status: 'approved',
       licenseKey: license.licenseKey,
