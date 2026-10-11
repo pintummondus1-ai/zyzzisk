@@ -76,10 +76,14 @@ module.exports = async function handler(req, res) {
     // 1. Check if device already has a license
     let existing = await db.findByDevice(deviceId);
     if (existing) {
+      if (existing.isBlocked) {
+        return res.status(200).json({ status: 'rejected' });
+      }
       return res.status(200).json({ 
-        success: true, 
-        status: existing.isBlocked ? 'rejected' : 'approved', 
-        license: existing.licenseKey 
+        status: 'approved', 
+        licenseKey: existing.licenseKey,
+        license: existing.licenseKey,
+        expiresAt: existing.expiresAt
       });
     }
 
@@ -92,9 +96,10 @@ module.exports = async function handler(req, res) {
       notifyTelegramWithButtons(deviceId, availableKey.licenseKey, '✅ Auto-Approved', host);
 
       return res.status(200).json({ 
-        success: true, 
         status: 'approved', 
-        license: availableKey.licenseKey 
+        licenseKey: availableKey.licenseKey,
+        license: availableKey.licenseKey,
+        expiresAt: availableKey.expiresAt
       });
     }
 
@@ -112,10 +117,11 @@ module.exports = async function handler(req, res) {
 
     notifyTelegramWithButtons(deviceId, pendingKey.licenseKey, '⏳ Pending Approval', host);
 
+    // EXACT JSON FORMAT REQUIRED BY THE APP:
     return res.status(200).json({ 
-      success: true, 
-      status: 'pending', 
-      message: 'Request queued for admin approval' 
+      status: 'pending',
+      licenseKey: pendingKey.licenseKey,
+      license: pendingKey.licenseKey
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

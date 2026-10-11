@@ -1,7 +1,6 @@
 const db = require('../lib/db');
 
 module.exports = async function handler(req, res) {
-  // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Token');
@@ -26,8 +25,10 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ status: 'expired' });
     }
 
+    // Return both licenseKey and license for 100% compatibility
     return res.status(200).json({
       status: 'approved',
+      licenseKey: license.licenseKey,
       license: license.licenseKey,
       expiresAt: license.expiresAt
     });
