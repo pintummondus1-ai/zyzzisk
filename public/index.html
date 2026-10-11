@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✦ JJK License Domain Admin Panel ✦</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Cinzel:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #060101;
+      --card-bg: rgba(15, 2, 2, 0.75);
+      --card-border: rgba(255, 0, 51, 0.35);
+      --neon-red: #FF0033;
+      --neon-red-glow: rgba(255, 0, 51, 0.6);
+      --text-color: #F5E6E8;
+      --text-muted: #A39698;
+      --accent: #E50914;
+      --emerald: #00FF66;
+      --emerald-glow: rgba(0, 255, 102, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(229, 9, 20, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 0, 0, 0.95) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M10 10 H 90 V 90 H 10 Z' fill='none' stroke='rgba(255,0,51,0.02)' stroke-width='1'/%3E%3C/svg%3E");
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 2rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 0, 51, 0.15);
+      background: linear-gradient(180deg, rgba(15,2,2,0.9) 0%, transparent 100%);
+      position: relative;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 2px;
+      background: var(--neon-red);
+      box-shadow: 0 0 10px var(--neon-red);
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 2.2rem;
+      letter-spacing: 0.2rem;
+      color: var(--neon-red);
+      text-shadow: 0 0 15px var(--neon-red-glow);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15rem;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 0, 51, 0.5);
+      box-shadow: 0 8px 32px 0 rgba(255, 0, 51, 0.1);
+    }
+
+    .auth-section {
+      max-width: 450px;
+      margin: 4rem auto;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05rem;
+      color: var(--text-muted);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 0, 51, 0.25);
+      border-radius: 6px;
+      color: var(--text-color);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--neon-red);
+      box-shadow: 0 0 8px var(--neon-red-glow);
+    }
+
+    button {
+      width: 100%;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent) 0%, #7F0000 100%);
+      color: white;
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+      transition: all 0.3s ease;
+      border: 1px solid var(--neon-red);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px var(--neon-red);
+      background: linear-gradient(135deg, #FF0033 0%, var(--accent) 100%);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .dashboard {
+      display: none;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      color: var(--text-color);
+      margin-bottom: 1.5rem;
+      border-left: 3px solid var(--neon-red);
+      padding-left: 0.8rem;
+      text-shadow: 0 0 5px var(--neon-red-glow);
+    }
+
+    .key-generator {
+      height: fit-content;
+    }
+
+    .search-bar {
+      margin-bottom: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 0, 51, 0.1);
+    }
+
+    th {
+      font-family: 'Cinzel', serif;
+      color: var(--text-muted);
+      font-weight: normal;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.05rem;
+    }
+
+    tr:hover td {
+      background: rgba(255, 0, 51, 0.03);
+    }
+
+    .mono {
+      font-family: monospace;
+      color: #FF9999;
+      font-size: 0.95rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-active {
+      background: rgba(0, 255, 102, 0.15);
+      color: var(--emerald);
+      border: 1px solid rgba(0, 255, 102, 0.3);
+    }
+
+    .status-blocked {
+      background: rgba(255, 0, 51, 0.15);
+      color: #FF3B30;
+      border: 1px solid rgba(255, 0, 51, 0.3);
+    }
+
+    .status-expired {
+      background: rgba(255, 149, 0, 0.15);
+      color: #FF9500;
+      border: 1px solid rgba(255, 149, 0, 0.3);
+    }
+
+    .status-unused {
+      background: rgba(255, 255, 255, 0.05);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .action-btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      width: auto;
+      margin-right: 0.5rem;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: none;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #FF3B30 0%, #8b0000 100%);
+      border: 1px solid #FF3B30;
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
+      background: #FF3B30;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--emerald) 0%, #004d1a 100%);
+      border: 1px solid var(--emerald);
+    }
+
+    .btn-success:hover {
+      box-shadow: 0 0 10px var(--emerald-glow);
+      background: var(--emerald);
+    }
+
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: rgba(15, 2, 2, 0.95);
+      border: 1px solid var(--neon-red);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 6px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      min-width: 250px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-success {
+      border-color: var(--emerald);
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1rem;
+      border-top: 1px solid rgba(255, 0, 51, 0.05);
+      margin-top: auto;
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      width: auto;
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 900;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--neon-red);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 30px var(--neon-red-glow);
+    }
+
+    .modal-key {
+      font-family: monospace;
+      color: #FF9999;
+      font-size: 0.9rem;
+      word-break: break-all;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .extend-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .extend-custom {
+      display: flex;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .extend-custom input {
+      flex: 1;
+    }
+
+    .extend-custom button {
+      width: auto;
+      padding: 0.8rem 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>✦ DOMAIN ACTIVATION ADMIN ✦</h1>
+    <div class="subtitle">Jujutsu Kaisen Key Management Panel</div>
+  </header>
+
+  <main>
+    <!-- Authentication Card -->
+    <div id="authCard" class="glass-card auth-section">
+      <div class="card-title">AUTHENTICATE SOUL</div>
+      <div class="form-group">
+        <label for="adminToken">Admin Access Token</label>
+        <input type="password" id="adminToken" placeholder="Enter X-Admin-Token">
+      </div>
+      <button onclick="login()">Enter Domain</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+      <button class="logout-btn btn-secondary" onclick="logout()">Seal Domain (Logout)</button>
+
+      <div class="grid-2">
+        <!-- Key Generator -->
+        <div class="glass-card key-generator">
+          <div class="card-title">Forge New License</div>
+          <div class="form-group">
+            <label for="durationDays">Duration (Days)</label>
+            <select id="durationDays">
+              <option value="1">1 Day</option>
+              <option value="7">7 Days</option>
+              <option value="30" selected>30 Days</option>
+              <option value="90">90 Days</option>
+              <option value="365">365 Days</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="customKey">Custom Key (Optional)</label>
+            <input type="text" id="customKey" placeholder="KEY-XXXX-XXXX-XXXX">
+          </div>
+          <button onclick="createKey()">Forge Key</button>
+        </div>
+
+        <!-- Licenses Table -->
+        <div class="glass-card">
+          <div class="card-title">Active Domains / Keys</div>
+          
+          <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by Key or Device ID..." onkeyup="filterLicenses()">
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>License Key</th>
+                  <th>Device ID</th>
+                  <th>Expires At</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="licensesTableBody">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted);">Summoning keys from the void...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Extend License Modal -->
+  <div class="modal-overlay" id="extendModal">
+    <div class="modal-card">
+      <div class="card-title">Extend License</div>
+      <div class="modal-key" id="extendModalKey"></div>
+      <div class="extend-options">
+        <button class="action-btn btn-success" onclick="extendKey(1)">+1 Day</button>
+        <button class="action-btn btn-success" onclick="extendKey(7)">+7 Days</button>
+        <button class="action-btn btn-success" onclick="extendKey(30)">+30 Days</button>
+      </div>
+      <div class="extend-custom">
+        <input type="number" id="extendCustomDays" min="1" placeholder="Other (days)">
+        <button class="action-btn btn-success" onclick="extendKeyCustom()">Add</button>
+      </div>
+      <button class="btn-secondary" onclick="closeExtendModal()">Cancel</button>
+    </div>
+  </div>
+
+  <footer>
+    ✦ Jujutsu Domain Systems © 2026 ✦
+  </footer>
+
+  <script>
+    let adminToken = localStorage.getItem('jjk_admin_token') || '';
+    let allLicenses = [];
+
+    window.onload = function() {
+      if (adminToken) {
+        document.getElementById('adminToken').value = adminToken;
+        showDashboard();
+      }
+    };
+
+    function login() {
+      const inputToken = document.getElementById('adminToken').value.trim();
+      if (!inputToken) {
+        showToast("Enter your admin token!", false);
+        return;
+      }
+      adminToken = inputToken;
+      localStorage.setItem('jjk_admin_token', adminToken);
+      showDashboard();
+    }
+
+    function logout() {
+      localStorage.removeItem('jjk_admin_token');
+      adminToken = '';
+      document.getElementById('adminToken').value = '';
+      document.getElementById('authCard').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'none';
+      showToast("Domain sealed. Logged out.", true);
+    }
+
+    async function showDashboard() {
+      document.getElementById('authCard').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'flex';
+      await loadLicenses();
+    }
+
+    async function loadLicenses() {
+      try {
+        const res = await fetch(`/api/admin/get-licenses?adminToken=${encodeURIComponent(adminToken)}`);
+        
+        if (res.status === 401) {
+          showToast("Unauthorized: Invalid admin token", false);
+          logout();
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          allLicenses = data.licenses || [];
+          renderLicenses(allLicenses);
+        } else {
+          showToast("Failed to load licenses: " + data.error, false);
+        }
+      } catch (err) {
+        showToast("Connection error: " + err.message, false);
+      }
+    }
+
+    function renderLicenses(licenses) {
+      const tbody = document.getElementById('licensesTableBody');
+      tbody.innerHTML = '';
+
+      if (licenses.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No licenses found inside the barrier.</td></tr>';
+        return;
+      }
+
+      const now = Date.now();
+
+      licenses.forEach(lic => {
+        const tr = document.createElement('tr');
+        
+        let status = 'unused';
+        let badgeClass = 'status-unused';
+        
+        if (lic.isBlocked) {
+          status = 'blocked';
+          badgeClass = 'status-blocked';
+        } else if (lic.expiresAt < now) {
+          status = 'expired';
+          badgeClass = 'status-expired';
+        } else if (lic.deviceId) {
+          status = 'active';
+          badgeClass = 'status-active';
+        }
+
+        const expiresDate = new Date(lic.expiresAt).toLocaleString();
+        
+        const keyDisplay = `<span class="mono">${lic.licenseKey}</span>`;
+        const deviceDisplay = lic.deviceId ? `<span class="mono" style="font-size: 0.8rem;">${lic.deviceId}</span>` : `<span style="color: var(--text-muted); font-style: italic;">unbound</span>`;
+        
+        const resetBtn = lic.deviceId 
+          ? `<button class="action-btn btn-secondary" onclick="resetDevice('${lic.licenseKey}')">Reset Device</button>` 
+          : '';
+          
+        const blockBtn = lic.isBlocked
+          ? `<button class="action-btn btn-success" onclick="toggleBlock('${lic.licenseKey}', false)">Unblock</button>`
+          : `<button class="action-btn btn-danger" onclick="toggleBlock('${lic.licenseKey}', true)">Block</button>`;
+
+        const extendBtn = `<button class="action-btn btn-success" onclick="openExtendModal('${lic.licenseKey}')">Extend</button>`;
+
+        tr.innerHTML = `
+          <td>${keyDisplay}</td>
+          <td>${deviceDisplay}</td>
+          <td>${expiresDate}</td>
+          <td><span class="status-badge ${badgeClass}">${status}</span></td>
+          <td>
+            ${extendBtn}
+            ${blockBtn}
+            ${resetBtn}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function createKey() {
+      const durationDays = parseInt(document.getElementById('durationDays').value);
+      const customKey = document.getElementById('customKey').value.trim();
+
+      try {
+        const res = await fetch('/api/admin/create-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': adminToken
+          },
+          body: JSON.stringify({
+            licenseKey: customKey || undefined,
+            durationDays: durationDays
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`License ${data.license.licenseKey} forged successfully!`, true);
+          document.getElementById('customKey').value = '';
+          await loadLicenses();
+        } else {
+          showToast("Failed to forge key: " + (data.error || "Unknown error"), false);
+        }
+      } catch (err) {
+        showToast("Error creating key: " + err.message, false);
+      }
+    }
+
+    async function toggleBlock(licenseKey, isBlocked) {
+      if (!confirm(`Are you sure you want to ${isBlocked ? 'BLOCK' : 'UNBLOCK'} key ${licenseKey}?`)) return;
+
+      try {
+        const res = await fetch('/api/admin/block-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': adminToken
+          },
+          body: JSON.stringify({ licenseKey, isBlocked })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`License status updated!`, true);
+          await loadLicenses();
+        } else {
+          showToast("Failed to update block state: " + (data.error || "Unknown error"), false);
+        }
+      } catch (err) {
+        showToast("Error updating key status: " + err.message, false);
+      }
+    }
+
+    async function resetDevice(licenseKey) {
+      if (!confirm(`Reset device link for key ${licenseKey}?`)) return;
+
+      try {
+        const res = await fetch('/api/admin/reset-device', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': adminToken
+          },
+          body: JSON.stringify({ licenseKey })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`Device unlinked successfully!`, true);
+          await loadLicenses();
+        } else {
+          showToast("Failed to unlink device: " + (data.error || "Unknown error"), false);
+        }
+      } catch (err) {
+        showToast("Error resetting device link: " + err.message, false);
+      }
+    }
+
+    let extendTargetKey = null;
+
+    function openExtendModal(licenseKey) {
+      extendTargetKey = licenseKey;
+      document.getElementById('extendModalKey').innerText = licenseKey;
+      document.getElementById('extendCustomDays').value = '';
+      document.getElementById('extendModal').classList.add('open');
+    }
+
+    function closeExtendModal() {
+      extendTargetKey = null;
+      document.getElementById('extendModal').classList.remove('open');
+    }
+
+    function extendKeyCustom() {
+      const days = parseInt(document.getElementById('extendCustomDays').value, 10);
+      if (!days || days <= 0) {
+        showToast("Enter a valid number of days!", false);
+        return;
+      }
+      extendKey(days);
+    }
+
+    async function extendKey(days) {
+      if (!extendTargetKey) return;
+      const key = extendTargetKey;
+      closeExtendModal();
+
+      try {
+        const res = await fetch('/api/admin/extend-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': adminToken
+          },
+          body: JSON.stringify({ licenseKey: key, days })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`License extended by ${days} day(s)!`, true);
+          await loadLicenses();
+        } else {
+          showToast("Failed to extend license: " + (data.error || "Unknown error"), false);
+        }
+      } catch (err) {
+        showToast("Error extending license: " + err.message, false);
+      }
+    }
+
+    function filterLicenses() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!query) {
+        renderLicenses(allLicenses);
+        return;
+      }
+
+      const filtered = allLicenses.filter(lic => 
+        lic.licenseKey.toLowerCase().includes(query) || 
+        (lic.deviceId && lic.deviceId.toLowerCase().includes(query))
+      );
+      renderLicenses(filtered);
+    }
+
+    function showToast(message, isSuccess = true) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${isSuccess ? 'toast-success' : ''}`;
+      toast.innerText = message;
+      
+      container.appendChild(toast);
+      
+      // Force reflow and show
+      setTimeout(() => toast.classList.add('show'), 10);
+      
+      // Auto-remove after 4 seconds
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
