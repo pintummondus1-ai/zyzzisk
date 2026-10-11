@@ -240,6 +240,47 @@ module.exports = async function handler(req, res) {
             parse_mode: 'Markdown'
           });
         }
+      } else if (text.startsWith('/block') && text !== '/blockall') {
+        const parts = text.split(/\s+/);
+        if (parts.length >= 2) {
+          const target = parts[1];
+          let lic = await db.findByDevice(target);
+          if (!lic) {
+            lic = await db.findByKey(target);
+          }
+
+          if (lic) {
+            lic.isBlocked = true;
+            lic.status = 'rejected';
+            await db.saveLicense(lic);
+            await tgApi('sendMessage', {
+              chat_id: chatId,
+              text: `🚫 *KEY / DEVICE BLOCKED!*\n\n📱 *Device / Key:* \`${target}\`\n\n_Is device ka app access turant band kar diya gaya hai!_`,
+              parse_mode: 'Markdown'
+            });
+          } else {
+            // Even if not found, create a blocked entry so it cannot be activated
+            await db.saveLicense({
+              licenseKey: 'BLOCKED-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
+              deviceId: target,
+              expiresAt: Date.now() + 365 * 86400000,
+              isBlocked: true,
+              isApproved: false,
+              status: 'rejected'
+            });
+            await tgApi('sendMessage', {
+              chat_id: chatId,
+              text: `🚫 *DEVICE BLOCKED!*\n\n📱 *Device ID:* \`${target}\`\n\n_Device ko blacklist me daal diya gaya hai!_`,
+              parse_mode: 'Markdown'
+            });
+          }
+        } else {
+          await tgApi('sendMessage', {
+            chat_id: chatId,
+            text: `⚠️ *Format:* \`/block <deviceId_ya_key>\`\n\nExample:\n\`/block 957904033e6daef8\``,
+            parse_mode: 'Markdown'
+          });
+        }
       } else if (text === '/newkey') {
         const key = 'JJK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
         await db.saveLicense({
