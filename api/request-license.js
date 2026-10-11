@@ -80,37 +80,29 @@ module.exports = async function handler(req, res) {
   try {
     const host = req.headers['host'] || '';
 
-    // 1. Check if device already has a license
+    // 1. Check if device is already registered
     let existing = await db.findByDevice(deviceId);
     if (existing) {
       if (existing.isBlocked) {
         return res.status(200).json({ status: 'rejected' });
       }
-      return res.status(200).json({ 
-        status: 'approved', 
-        licenseKey: existing.licenseKey,
-        license: existing.licenseKey,
-        expiresAt: existing.expiresAt
-      });
+      // If admin has NOT approved yet, STRICTLY keep it pending!
+      if (existing.status === 'pending') {
+        return res.status(200).json({ status: 'pending' });
+      }
+      // If approved by admin and not expired:
+      if (existing.expiresAt > Date.now()) {
+        return res.status(200).json({ 
+          status: 'approved', 
+          licenseKey: existing.licenseKey,
+          license: existing.licenseKey,
+          expiresAt: existing.expiresAt
+        });
+      }
+      return res.status(200).json({ status: 'expired' });
     }
 
-    // 2. Check if an unbound key is available to assign
-    let availableKey = await db.findAvailableKey();
-    if (availableKey) {
-      availableKey.deviceId = deviceId;
-      await db.saveLicense(availableKey);
-
-      notifyTelegramWithButtons(deviceId, availableKey.licenseKey, '✅ Auto-Approved', host);
-
-      return res.status(200).json({ 
-        status: 'approved', 
-        licenseKey: availableKey.licenseKey,
-        license: availableKey.licenseKey,
-        expiresAt: availableKey.expiresAt
-      });
-    }
-
-    // 3. Otherwise create a pending license request record
+    // 2. New device: STRICT MANUAL APPROVAL ONLY (No auto-approvals!)
     const pendingKey = {
       licenseKey: 'REQ-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
       deviceId: deviceId,
@@ -122,12 +114,12 @@ module.exports = async function handler(req, res) {
     };
     await db.saveLicense(pendingKey);
 
+    // Send Telegram Notification to Admin
     notifyTelegramWithButtons(deviceId, pendingKey.licenseKey, '⏳ Pending Approval', host);
 
+    // Return strictly pending!
     return res.status(200).json({ 
-      status: 'pending',
-      licenseKey: pendingKey.licenseKey,
-      license: pendingKey.licenseKey
+      status: 'pending'
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

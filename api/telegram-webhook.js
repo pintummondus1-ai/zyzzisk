@@ -87,9 +87,11 @@ module.exports = async function handler(req, res) {
             durationDays: days,
             createdAt: Date.now(),
             expiresAt: Date.now() + days * 86400000,
-            isBlocked: false
+            isBlocked: false,
+            status: 'approved'
           };
         } else {
+          lic.status = 'approved';
           lic.isBlocked = false;
           lic.durationDays = days;
           lic.expiresAt = Date.now() + days * 86400000;
@@ -118,6 +120,7 @@ module.exports = async function handler(req, res) {
         let lic = await db.findByDevice(deviceId);
         if (lic) {
           lic.isBlocked = true;
+          lic.status = 'rejected';
           await db.saveLicense(lic);
         }
 
@@ -143,7 +146,7 @@ module.exports = async function handler(req, res) {
       if (text === '/start') {
         await tgApi('sendMessage', {
           chat_id: chatId,
-          text: `🔥 *JJK License Manager Bot Active!*\n\nCommands:\n• /blockall - 🚨 Sare devices aur keys turant block karein\n• /unblockall - ✅ Sare devices unblock karein\n• /stats - Active licenses count\n• /newkey - Forge a 30-day license key`,
+          text: `🔥 *JJK License Manager Bot Active!*\n\nCommands:\n• /blockall - 🚨 Sare devices block karein\n• /unblockall - ✅ Sare devices unblock karein\n• /stats - Active licenses count\n• /newkey - Forge a 30-day license key`,
           parse_mode: 'Markdown'
         });
       } else if (text === '/blockall') {
@@ -177,7 +180,8 @@ module.exports = async function handler(req, res) {
           durationDays: 30,
           createdAt: Date.now(),
           expiresAt: Date.now() + 30 * 86400000,
-          isBlocked: false
+          isBlocked: false,
+          status: 'unused'
         });
         await tgApi('sendMessage', {
           chat_id: chatId,
