@@ -281,6 +281,42 @@ module.exports = async function handler(req, res) {
             parse_mode: 'Markdown'
           });
         }
+      } else if (text.startsWith('/unblock') && text !== '/unblockall') {
+        const parts = text.split(/\s+/);
+        if (parts.length >= 2) {
+          const target = parts[1];
+          let lic = await db.findByDevice(target);
+          if (!lic) {
+            lic = await db.findByKey(target);
+          }
+
+          if (lic) {
+            lic.isBlocked = false;
+            lic.isApproved = true;
+            lic.status = 'approved';
+            if (lic.expiresAt < Date.now()) {
+              lic.expiresAt = Date.now() + 30 * 86400000;
+            }
+            await db.saveLicense(lic);
+            await tgApi('sendMessage', {
+              chat_id: chatId,
+              text: `✅ *DEVICE / KEY UNBLOCKED!*\n\n📱 *Device / Key:* \`${target}\`\n📊 *Status:* *APPROVED*\n⏳ *Expires:* ${new Date(lic.expiresAt).toLocaleDateString()}\n\n_Is device ka app access wapas chalu ho gaya hai!_`,
+              parse_mode: 'Markdown'
+            });
+          } else {
+            await tgApi('sendMessage', {
+              chat_id: chatId,
+              text: `⚠️ *Device / Key nahi mila:* \`${target}\`\n\nAap \`/approve ${target} 30\` command se direct approve kar sakte hain.`,
+              parse_mode: 'Markdown'
+            });
+          }
+        } else {
+          await tgApi('sendMessage', {
+            chat_id: chatId,
+            text: `⚠️ *Format:* \`/unblock <deviceId_ya_key>\`\n\nExample:\n\`/unblock 957904033e6daef8\``,
+            parse_mode: 'Markdown'
+          });
+        }
       } else if (text === '/newkey') {
         const key = 'JJK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
         await db.saveLicense({
