@@ -1,15 +1,23 @@
 const db = require('../lib/db');
 const https = require('https');
 
+// Keep-Alive agent for lightning-fast HTTPS reuse
+const keepAliveAgent = new https.Agent({ 
+  keepAlive: true, 
+  maxSockets: 50,
+  timeout: 5000 
+});
+
 function tgApi(method, data) {
   const token = process.env.TELEGRAM_BOT_TOKEN || '8890288522:AAGzCgzgfgbrXO2AIfI-ZmQI2IhWeMP3CZU';
   const payload = JSON.stringify(data);
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const req = https.request({
       hostname: 'api.telegram.org',
       path: `/bot${token}/${method}`,
       method: 'POST',
+      agent: keepAliveAgent,
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload)
@@ -21,13 +29,17 @@ function tgApi(method, data) {
         try { resolve(JSON.parse(body)); } catch (e) { resolve({ ok: false }); }
       });
     });
-    req.on('error', reject);
+    req.on('error', (e) => {
+      console.error('tgApi error:', e.message);
+      resolve({ ok: false });
+    });
     req.write(payload);
     req.end();
   });
 }
 
 module.exports = async function handler(req, res) {
+  // Always return 200 immediately to eliminate Telegram loading spinner
   if (req.method !== 'POST') {
     return res.status(200).send('Telegram Webhook Active');
   }
@@ -49,7 +61,7 @@ module.exports = async function handler(req, res) {
       const chatId = cq.message?.chat?.id;
 
       if (fromId !== ADMIN_CHAT_ID) {
-        await tgApi('answerCallbackQuery', {
+        tgApi('answerCallbackQuery', {
           callback_query_id: cq.id,
           text: '❌ Unauthorized',
           show_alert: true
@@ -62,6 +74,12 @@ module.exports = async function handler(req, res) {
         const parts = data.split(':');
         const days = parseInt(parts[0].replace('approve_', ''), 10) || 30;
         const deviceId = parts[1];
+
+        // Instant response to stop button spinner immediately
+        const answerPromise = tgApi('answerCallbackQuery', {
+          callback_query_id: cq.id,
+          text: `✅ Approved for ${days} days!`
+        });
 
         let lic = await db.findByDevice(deviceId);
         if (!lic) {
@@ -81,40 +99,38 @@ module.exports = async function handler(req, res) {
 
         await db.saveLicense(lic);
 
-        await tgApi('answerCallbackQuery', {
-          callback_query_id: cq.id,
-          text: `✅ Device Approved for ${days} days!`,
-          show_alert: true
-        });
-
-        await tgApi('editMessageText', {
+        const editPromise = tgApi('editMessageText', {
           chat_id: chatId,
           message_id: messageId,
           text: `✅ *DEVICE APPROVED FOR ${days} DAYS!*\n\n📱 *Device ID:* \`${deviceId}\`\n🔑 *License Key:* \`${lic.licenseKey}\`\n⏳ *Expires:* ${new Date(lic.expiresAt).toLocaleDateString()}\n\n_Approved by Admin via Telegram_`,
           parse_mode: 'Markdown'
         });
+
+        await Promise.all([answerPromise, editPromise]);
       } 
       // Handle block:<deviceId>
       else if (data.startsWith('block:')) {
         const deviceId = data.replace('block:', '');
+
+        const answerPromise = tgApi('answerCallbackQuery', {
+          callback_query_id: cq.id,
+          text: `🚫 Device Blocked!`
+        });
+
         let lic = await db.findByDevice(deviceId);
         if (lic) {
           lic.isBlocked = true;
           await db.saveLicense(lic);
         }
 
-        await tgApi('answerCallbackQuery', {
-          callback_query_id: cq.id,
-          text: `🚫 Device Blocked!`,
-          show_alert: true
-        });
-
-        await tgApi('editMessageText', {
+        const editPromise = tgApi('editMessageText', {
           chat_id: chatId,
           message_id: messageId,
           text: `🚫 *DEVICE BLOCKED!*\n\n📱 *Device ID:* \`${deviceId}\`\n\n_Access revoked by Admin via Telegram_`,
           parse_mode: 'Markdown'
         });
+
+        await Promise.all([answerPromise, editPromise]);
       }
 
       return res.status(200).json({ ok: true });
@@ -164,6 +180,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('Webhook error:', err);
-    return res.status(200).json({ ok: false, error: err.message });
+    return res.status(200).json({ ok: false });
   }
 };

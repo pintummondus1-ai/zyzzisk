@@ -1,7 +1,13 @@
 const db = require('../lib/db');
 const https = require('https');
 
-// Helper to send Telegram notification with inline action buttons
+// Keep-Alive agent for fast Telegram messaging
+const keepAliveAgent = new https.Agent({ 
+  keepAlive: true, 
+  maxSockets: 50,
+  timeout: 5000 
+});
+
 function notifyTelegramWithButtons(deviceId, key, status, host) {
   const token = process.env.TELEGRAM_BOT_TOKEN || '8890288522:AAGzCgzgfgbrXO2AIfI-ZmQI2IhWeMP3CZU';
   const chatId = process.env.TELEGRAM_CHAT_ID || '8855223328';
@@ -39,6 +45,7 @@ function notifyTelegramWithButtons(deviceId, key, status, host) {
     hostname: 'api.telegram.org',
     path: `/bot${token}/sendMessage`,
     method: 'POST',
+    agent: keepAliveAgent,
     headers: {
       'Content-Type': 'application/json',
       'Content-Length': Buffer.byteLength(data)
@@ -117,7 +124,6 @@ module.exports = async function handler(req, res) {
 
     notifyTelegramWithButtons(deviceId, pendingKey.licenseKey, '⏳ Pending Approval', host);
 
-    // EXACT JSON FORMAT REQUIRED BY THE APP:
     return res.status(200).json({ 
       status: 'pending',
       licenseKey: pendingKey.licenseKey,
