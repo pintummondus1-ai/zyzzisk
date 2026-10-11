@@ -27,6 +27,10 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ status: 'rejected' });
     }
 
+    if (license.isApproved !== true && license.status !== 'approved') {
+      return res.status(200).json({ status: 'pending' });
+    }
+
     if (license.expiresAt < Date.now()) {
       return res.status(200).json({ status: 'expired' });
     }

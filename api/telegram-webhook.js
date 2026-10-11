@@ -88,10 +88,12 @@ module.exports = async function handler(req, res) {
             createdAt: Date.now(),
             expiresAt: Date.now() + days * 86400000,
             isBlocked: false,
+            isApproved: true,
             status: 'approved'
           };
         } else {
           lic.status = 'approved';
+          lic.isApproved = true;
           lic.isBlocked = false;
           lic.durationDays = days;
           lic.expiresAt = Date.now() + days * 86400000;

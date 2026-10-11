@@ -1,7 +1,6 @@
 const db = require('../lib/db');
 const https = require('https');
 
-// Keep-Alive agent for fast Telegram messaging
 const keepAliveAgent = new https.Agent({ 
   keepAlive: true, 
   maxSockets: 50,
@@ -86,23 +85,25 @@ module.exports = async function handler(req, res) {
       if (existing.isBlocked) {
         return res.status(200).json({ status: 'rejected' });
       }
-      // If admin has NOT approved yet, STRICTLY keep it pending!
-      if (existing.status === 'pending') {
-        return res.status(200).json({ status: 'pending' });
+      
+      // STRICT CHECK: ONLY return approved if admin explicitly set isApproved = true
+      if (existing.isApproved === true || existing.status === 'approved') {
+        if (existing.expiresAt > Date.now()) {
+          return res.status(200).json({ 
+            status: 'approved', 
+            licenseKey: existing.licenseKey,
+            license: existing.licenseKey,
+            expiresAt: existing.expiresAt
+          });
+        }
+        return res.status(200).json({ status: 'expired' });
       }
-      // If approved by admin and not expired:
-      if (existing.expiresAt > Date.now()) {
-        return res.status(200).json({ 
-          status: 'approved', 
-          licenseKey: existing.licenseKey,
-          license: existing.licenseKey,
-          expiresAt: existing.expiresAt
-        });
-      }
-      return res.status(200).json({ status: 'expired' });
+
+      // If not explicitly approved, IT IS ALWAYS PENDING!
+      return res.status(200).json({ status: 'pending' });
     }
 
-    // 2. New device: STRICT MANUAL APPROVAL ONLY (No auto-approvals!)
+    // 2. New device: STRICT MANUAL APPROVAL ONLY
     const pendingKey = {
       licenseKey: 'REQ-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
       deviceId: deviceId,
@@ -110,6 +111,7 @@ module.exports = async function handler(req, res) {
       createdAt: Date.now(),
       expiresAt: Date.now() + 30 * 86400000,
       isBlocked: false,
+      isApproved: false,
       status: 'pending'
     };
     await db.saveLicense(pendingKey);
@@ -117,7 +119,6 @@ module.exports = async function handler(req, res) {
     // Send Telegram Notification to Admin
     notifyTelegramWithButtons(deviceId, pendingKey.licenseKey, '⏳ Pending Approval', host);
 
-    // Return strictly pending!
     return res.status(200).json({ 
       status: 'pending'
     });
