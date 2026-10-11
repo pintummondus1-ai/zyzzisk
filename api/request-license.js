@@ -27,12 +27,18 @@ function notifyTelegramWithButtons(deviceId, key, status, host) {
     reply_markup: {
       inline_keyboard: [
         [
-          { text: '✅ Approve 30 Days', callback_data: `approve_30:${deviceId}` },
-          { text: '✅ Approve 90 Days', callback_data: `approve_90:${deviceId}` }
+          { text: '⚡ 7 Days', callback_data: `approve_7:${deviceId}` },
+          { text: '⚡ 15 Days', callback_data: `approve_15:${deviceId}` },
+          { text: '✅ 30 Days', callback_data: `approve_30:${deviceId}` }
+        ],
+        [
+          { text: '🔥 90 Days', callback_data: `approve_90:${deviceId}` },
+          { text: '👑 365 Days', callback_data: `approve_365:${deviceId}` },
+          { text: '✏️ Manual Days', callback_data: `custom_days:${deviceId}` }
         ],
         [
           { text: '🚫 Block Device', callback_data: `block:${deviceId}` },
-          { text: '🌐 Open Admin Panel', url: panelUrl }
+          { text: '🌐 Admin Panel', url: panelUrl }
         ]
       ]
     }

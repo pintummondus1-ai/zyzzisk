@@ -110,6 +110,23 @@ module.exports = async function handler(req, res) {
 
         await Promise.all([answerPromise, editPromise]);
       } 
+      // Handle custom_days:<deviceId>
+      else if (data.startsWith('custom_days:')) {
+        const deviceId = data.replace('custom_days:', '');
+
+        const answerPromise = tgApi('answerCallbackQuery', {
+          callback_query_id: cq.id,
+          text: `✏️ Reply with command: /approve ${deviceId} <days>`
+        });
+
+        const replyPromise = tgApi('sendMessage', {
+          chat_id: chatId,
+          text: `✏️ *MANUAL DAYS APPROVAL*\n\nDevice ID: \`${deviceId}\`\n\nIs device ko customize days ke sath approve karne ke liye ye command copy karke send karein:\n\n\`/approve ${deviceId} 45\`\n\n_(Aap 45 ki jagah koi bhi days likh sakte hain, jaise 1, 10, 60, 180, 500 etc.)_`,
+          parse_mode: 'Markdown'
+        });
+
+        await Promise.all([answerPromise, replyPromise]);
+      }
       // Handle block:<deviceId>
       else if (data.startsWith('block:')) {
         const deviceId = data.replace('block:', '');
@@ -148,7 +165,7 @@ module.exports = async function handler(req, res) {
       if (text === '/start') {
         await tgApi('sendMessage', {
           chat_id: chatId,
-          text: `🔥 *JJK License Manager Bot Active!*\n\nCommands:\n• /blockall - 🚨 Sare devices block karein\n• /unblockall - ✅ Sare devices unblock karein\n• /stats - Active licenses count\n• /newkey - Forge a 30-day license key`,
+          text: `🔥 *JJK License Manager Bot Active!*\n\nCommands:\n• \`/approve <deviceId> <days>\` - ✏️ Manually custom days approve karein\n• \`/newkey\` - Forge a 30-day license key\n• \`/stats\` - Active licenses count\n• \`/blockall\` - 🚨 Sare devices block karein\n• \`/unblockall\` - ✅ Sare devices unblock karein`,
           parse_mode: 'Markdown'
         });
       } else if (text === '/blockall') {
@@ -174,6 +191,55 @@ module.exports = async function handler(req, res) {
           text: `📊 *System Stats:*\n\n• Global Block: *${isBlocked ? '🚨 ACTIVE (BLOCKED)' : '🟢 OFF (NORMAL)'}*\n• Total Keys: *${all.length}*\n• Active Licenses: *${active.length}*`,
           parse_mode: 'Markdown'
         });
+      } else if (text.startsWith('/approve')) {
+        const parts = text.split(/\s+/);
+        // Format: /approve <deviceId> <days>
+        if (parts.length >= 3) {
+          const targetDevice = parts[1];
+          const customDays = parseInt(parts[2], 10);
+
+          if (!customDays || customDays <= 0) {
+            await tgApi('sendMessage', {
+              chat_id: chatId,
+              text: `⚠️ *Invalid Days!*\n\nSahi format: \`/approve <deviceId> <days>\`\nExample: \`/approve ${targetDevice} 60\``,
+              parse_mode: 'Markdown'
+            });
+          } else {
+            let lic = await db.findByDevice(targetDevice);
+            if (!lic) {
+              lic = {
+                licenseKey: 'JJK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
+                deviceId: targetDevice,
+                durationDays: customDays,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + customDays * 86400000,
+                isBlocked: false,
+                isApproved: true,
+                status: 'approved'
+              };
+            } else {
+              lic.status = 'approved';
+              lic.isApproved = true;
+              lic.isBlocked = false;
+              lic.durationDays = customDays;
+              lic.expiresAt = Date.now() + customDays * 86400000;
+            }
+
+            await db.saveLicense(lic);
+
+            await tgApi('sendMessage', {
+              chat_id: chatId,
+              text: `✅ *MANUAL APPROVAL SUCCESSFUL!*\n\n📱 *Device ID:* \`${targetDevice}\`\n⏳ *Duration:* *${customDays} Days*\n🔑 *License Key:* \`${lic.licenseKey}\`\n📅 *Expires:* ${new Date(lic.expiresAt).toLocaleDateString()}\n\n_Device activated successfully!_`,
+              parse_mode: 'Markdown'
+            });
+          }
+        } else {
+          await tgApi('sendMessage', {
+            chat_id: chatId,
+            text: `⚠️ *Format:* \`/approve <deviceId> <days>\`\n\nExample:\n\`/approve 1234567890 45\``,
+            parse_mode: 'Markdown'
+          });
+        }
       } else if (text === '/newkey') {
         const key = 'JJK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
         await db.saveLicense({
