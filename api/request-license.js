@@ -1,4 +1,40 @@
 const db = require('../lib/db');
+const https = require('https');
+
+// Helper to send Telegram notification to Admin
+function notifyTelegram(deviceId, key, status, host) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) return;
+
+  const panelUrl = host ? `https://${host}` : 'Admin Panel';
+  const text = `🔔 *New Device License Request!*\n\n` +
+               `📱 *Device ID:* \`${deviceId}\`\n` +
+               `🔑 *Key Assigned:* \`${key}\`\n` +
+               `📊 *Status:* ${status}\n\n` +
+               `🔗 [Open Admin Panel](${panelUrl})`;
+
+  const data = JSON.stringify({
+    chat_id: chatId,
+    text: text,
+    parse_mode: 'Markdown'
+  });
+
+  const req = https.request({
+    hostname: 'api.telegram.org',
+    path: `/bot${token}/sendMessage`,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(data)
+    }
+  });
+
+  req.on('error', (e) => console.error('Telegram notify error:', e.message));
+  req.write(data);
+  req.end();
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,10 +57,16 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const host = req.headers['host'] || '';
+
     // 1. Check if device already has a license
     let existing = await db.findByDevice(deviceId);
     if (existing) {
-      return res.status(200).json({ success: true, status: existing.isBlocked ? 'rejected' : 'approved', license: existing.licenseKey });
+      return res.status(200).json({ 
+        success: true, 
+        status: existing.isBlocked ? 'rejected' : 'approved', 
+        license: existing.licenseKey 
+      });
     }
 
     // 2. Check if an unbound key is available to assign
@@ -32,7 +74,14 @@ module.exports = async function handler(req, res) {
     if (availableKey) {
       availableKey.deviceId = deviceId;
       await db.saveLicense(availableKey);
-      return res.status(200).json({ success: true, status: 'approved', license: availableKey.licenseKey });
+
+      notifyTelegram(deviceId, availableKey.licenseKey, '✅ Auto-Approved', host);
+
+      return res.status(200).json({ 
+        success: true, 
+        status: 'approved', 
+        license: availableKey.licenseKey 
+      });
     }
 
     // 3. Otherwise create a pending license request record
@@ -47,7 +96,13 @@ module.exports = async function handler(req, res) {
     };
     await db.saveLicense(pendingKey);
 
-    return res.status(200).json({ success: true, status: 'pending', message: 'Request queued for admin approval' });
+    notifyTelegram(deviceId, pendingKey.licenseKey, '⏳ Pending Approval', host);
+
+    return res.status(200).json({ 
+      success: true, 
+      status: 'pending', 
+      message: 'Request queued for admin approval' 
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
