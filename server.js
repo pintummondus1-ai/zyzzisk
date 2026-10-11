@@ -21,6 +21,8 @@ const createKeyHandler = require('./api/admin/create-key');
 const blockKeyHandler = require('./api/admin/block-key');
 const resetDeviceHandler = require('./api/admin/reset-device');
 const extendKeyHandler = require('./api/admin/extend-key');
+const telegramWebhookHandler = require('./api/telegram-webhook');
+const setupWebhookHandler = require('./api/setup-webhook');
 
 // Route Mappings
 app.all('/api/license-status', (req, res) => licenseStatusHandler(req, res));
@@ -30,6 +32,8 @@ app.all('/api/admin/create-key', (req, res) => createKeyHandler(req, res));
 app.all('/api/admin/block-key', (req, res) => blockKeyHandler(req, res));
 app.all('/api/admin/reset-device', (req, res) => resetDeviceHandler(req, res));
 app.all('/api/admin/extend-key', (req, res) => extendKeyHandler(req, res));
+app.all('/api/telegram-webhook', (req, res) => telegramWebhookHandler(req, res));
+app.all('/api/setup-webhook', (req, res) => setupWebhookHandler(req, res));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

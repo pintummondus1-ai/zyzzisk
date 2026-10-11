@@ -1,25 +1,39 @@
 const db = require('../lib/db');
 const https = require('https');
 
-// Helper to send Telegram notification to Admin
-function notifyTelegram(deviceId, key, status, host) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+// Helper to send Telegram notification with inline action buttons
+function notifyTelegramWithButtons(deviceId, key, status, host) {
+  const token = process.env.TELEGRAM_BOT_TOKEN || '8890288522:AAGzCgzgfgbrXO2AIfI-ZmQI2IhWeMP3CZU';
+  const chatId = process.env.TELEGRAM_CHAT_ID || '8855223328';
 
   if (!token || !chatId) return;
 
-  const panelUrl = host ? `https://${host}` : 'Admin Panel';
+  const panelUrl = host ? `https://${host}` : 'https://zyzzisk.vercel.app';
   const text = `🔔 *New Device License Request!*\n\n` +
                `📱 *Device ID:* \`${deviceId}\`\n` +
                `🔑 *Key Assigned:* \`${key}\`\n` +
                `📊 *Status:* ${status}\n\n` +
-               `🔗 [Open Admin Panel](${panelUrl})`;
+               `👇 *Approve ya Block karne ke liye neeche button dabayein:*`;
 
-  const data = JSON.stringify({
+  const payload = {
     chat_id: chatId,
     text: text,
-    parse_mode: 'Markdown'
-  });
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '✅ Approve 30 Days', callback_data: `approve_30:${deviceId}` },
+          { text: '✅ Approve 90 Days', callback_data: `approve_90:${deviceId}` }
+        ],
+        [
+          { text: '🚫 Block Device', callback_data: `block:${deviceId}` },
+          { text: '🌐 Open Admin Panel', url: panelUrl }
+        ]
+      ]
+    }
+  };
+
+  const data = JSON.stringify(payload);
 
   const req = https.request({
     hostname: 'api.telegram.org',
@@ -75,7 +89,7 @@ module.exports = async function handler(req, res) {
       availableKey.deviceId = deviceId;
       await db.saveLicense(availableKey);
 
-      notifyTelegram(deviceId, availableKey.licenseKey, '✅ Auto-Approved', host);
+      notifyTelegramWithButtons(deviceId, availableKey.licenseKey, '✅ Auto-Approved', host);
 
       return res.status(200).json({ 
         success: true, 
@@ -96,7 +110,7 @@ module.exports = async function handler(req, res) {
     };
     await db.saveLicense(pendingKey);
 
-    notifyTelegram(deviceId, pendingKey.licenseKey, '⏳ Pending Approval', host);
+    notifyTelegramWithButtons(deviceId, pendingKey.licenseKey, '⏳ Pending Approval', host);
 
     return res.status(200).json({ 
       success: true, 
